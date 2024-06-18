@@ -69,7 +69,7 @@ const register_user = async (req, res, next) => {
       number: number,
     };
     console.log('my email', email)
-    await register_user_email(email);
+    // await register_user_email(email);
 
     return res.json({
       message: "Registered successfully!",
