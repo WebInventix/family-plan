@@ -32,6 +32,10 @@ class JOI_Service {
         return Joi.string()
         .required()
     }
+    static joi_dob_pattern() {
+        return Joi.date()
+        .required()
+    }
 
     // Check confirm password
     static joi_confirm_password_pattern() {
@@ -64,6 +68,27 @@ class JOI_Validations {
         const userRegisterSchema = Joi.object({
             email: JOI_Service.joi_email_string(),
             password: JOI_Service.joi_password_pattern(),
+        })
+        const { error } = userRegisterSchema.validate(payload);
+        return error
+    }
+
+    static user_add_coParent_joi_validation(payload) {
+        const userRegisterSchema = Joi.object({
+            email: JOI_Service.joi_email_string(),
+            first_name: JOI_Service.joi_first_name_pattern(),
+            last_name: JOI_Service.joi_last_name_pattern(),
+        })
+        const { error } = userRegisterSchema.validate(payload);
+        return error
+    }
+
+    static children_joi_validation(payload) {
+        const userRegisterSchema = Joi.object({
+            email: JOI_Service.joi_email_string(),
+            first_name: JOI_Service.joi_first_name_pattern(),
+            last_name: JOI_Service.joi_last_name_pattern(),
+            dob: JOI_Service.joi_dob_pattern()
         })
         const { error } = userRegisterSchema.validate(payload);
         return error
