@@ -5,6 +5,7 @@ const { Childrens } = require("../../models/ChildModel");
 const User_DTO = require("../../dto/user_dto");
 const { sendWelcomeEmailCoParent } = require('../../utils/email');
 const { generateRandomPassword } = require('../../utils/passwordGenerator');
+const { all } = require("../../routes/user_routes");
 // const {
 //     register_user,
 // } = require("../../utils/email_transport_config");
@@ -128,14 +129,17 @@ const add_co_parent = async (req, res, next) => {
 const addChildren = async (req, res, next) => {
     const { body, user_id } = req;
     const { first_name, last_name, email, number, dob, doctor, medical_issues, gender } = body;
-
+    
     const validation_error = JOI_Validations.children_joi_validation(body);
     if (validation_error) {
         console.log("validation","Error")
       return next(validation_error);
     }
 
+    
+
     const is_email_exist = await User_Auth_Schema.exists({ email });
+    
     if (is_email_exist) {
       const error = {
         status: 409,
@@ -146,11 +150,35 @@ const addChildren = async (req, res, next) => {
 
 
     try {
+       
+        const coParent = await User_Auth_Schema.find({added_by:user_id});
+            if(coParent.length>0)
+            {
+                var coParentId = coParent[0]._id;
+            }
+            
+            const child = new Childrens({
+                first_name,
+                last_name,
+                email,
+                number,
+                dob,
+                doctor,
+                medical_issues,
+                gender,
+                added_by:user_id,
+                co_parent:coParentId
+            });
 
-        const coParent = await User_Auth_Schema.find({added_by,user_id});
-        console.log(coParent);
+            await child.save();
 
-        return res.status(200).json({coParent:coParent})
+            let allChilds = await Childrens.find({added_by:user_id})
+            return res.status(200).json({message:"Child Added Successfully",allChilds:allChilds})
+
+        
+      
+
+
         
     } catch (error) {
         return res.status(300).json({message:error.message})
@@ -158,10 +186,37 @@ const addChildren = async (req, res, next) => {
 
     
 }
+
+const ActivateAccount = async (req, res, next) => {
+    const { body, user_id } = req;
+    console.log('yes');
+    let mySelf = await User_Auth_Schema.find({_id:user_id});
+    let coParent = await User_Auth_Schema.find({added_by:user_id})
+    let childrens = await Childrens.find({added_by:user_id})
+    let data = {me:mySelf,parent:coParent,childrens:childrens}
+    // return res.status(200).json({message:"Account Activated Successfully",data:data,id:user_id})
+    try{
+        if(mySelf[0].card_holder_name!==null && coParent.length>0 && childrens.length>0 )
+            {
+                //logic here
+                await User_Auth_Schema.updateOne({ _id: user_id }, { verified: true });
+                return res.status(200).json({message:"Account Activated Successfully"})
+            }
+            else
+            {
+                return res.status(300).json({message:"Please Complete Your Profile First"})
+            }
+    } catch (error)
+    {
+        return res.status(300).json({message:error.message})
+    }
+
+}
 module.exports = {
 
     update_parent,
     add_co_parent,
-    addChildren
+    addChildren,
+    ActivateAccount
 
 };
