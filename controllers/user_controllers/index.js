@@ -84,11 +84,10 @@ const add_co_parent = async (req, res, next) => {
     const { body , user_id} = req;
     const {first_name,last_name,email,number,dob,gender,address} = body;
    
-    const validation_error = JOI_Validations.user_add_coParent_joi_validation(body);
-    if (validation_error) {
-        console.log("validation","Error")
-      return next(validation_error);
-    }
+    if(!first_name || !last_name || !email)
+        {
+            return res.status(300).json({message:"First Name , Last Name Or Email is Missing"})
+        }
 
     const is_email_exist = await User_Auth_Schema.exists({ email });
     if (is_email_exist) {
